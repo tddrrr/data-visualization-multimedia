@@ -52,11 +52,15 @@ async function loadData() {
     })
 
     let animate = document.getElementById("animatie");
-    
+    let buttonTable = document.getElementById("buttonTable")
     countrySelector.addEventListener('change', drawSVGGraph);
     indicatorSelector.addEventListener('change', drawSVGGraph);
-    yearSelector.addEventListener('change', (e) => drawBubbleChart(e.target.value));
+    yearSelector.addEventListener('change', (e) => {drawBubbleChart(e.target.value);
+                                                    createTable(e.target.value)});
     animate.addEventListener('click', canvasAnimation);
+    buttonTable.addEventListener('click', () => {
+        document.getElementById("myTable").classList.toggle("displayTable");
+    })
 }
 
 function drawSVGGraph() {
@@ -218,6 +222,121 @@ function canvasAnimation() {
     }
     ,1000);
     }
+}
+
+
+function createTable(year) {
+
+    let objectsSelected = [];
+    let indicators = [];
+    let countries = [];
+    let valuesPIB = [];
+    let valuesSV = [];
+    let valuesPOP = [];
+    let sumaPIB=0, sumaPOP=0, sumaSV=0;
+    data.forEach(element => {
+        if (element.an === year)
+            objectsSelected.push(element);
+    });
+    data.forEach(element => {//verific daca deja exista el in array
+        if (!indicators.includes(element.indicator)) {
+            indicators.push(element.indicator);
+        }
+    });
+    objectsSelected.forEach(element => {//verific daca deja exista el in array
+        if (!countries.includes(element.tara)) {
+            countries.push(element.tara);
+        }
+        if (element.indicator === "PIB") {
+            valuesPIB.push(element.valoare);
+            if (element.valoare != "null") {
+                sumaPIB += element.valoare;
+            }
+        }
+        if (element.indicator === "POP") {
+            valuesPOP.push(element.valoare);
+            if (element.valoare != "null") {
+                sumaPOP += element.valoare;
+            }
+        }
+        if (element.indicator === "SV") {
+            valuesSV.push(element.valoare);
+            if (element.valoare != "null") {
+                sumaSV += element.valoare;
+            }
+        }
+    });
+
+    let mediaPIB = sumaPIB/(valuesPIB.length);
+    let mediaPOP = sumaPOP/(valuesPOP.length);
+    let mediaSV = sumaSV/ (valuesSV.length);
+    
+    let tableExists = document.getElementById("myTable");
+    if (tableExists) {
+        document.body.removeChild(tableExists);
+    }
+    let table = document.createElement("table");
+
+    let tableHeader = document.createElement("thead");
+    let tableBody = document.createElement("tbody");
+    let headerRow = document.createElement("tr");
+    let headerCountry = document.createElement("th");
+    headerCountry.innerHTML = "Tara";
+    headerRow.appendChild(headerCountry);
+    let objects = [];
+    for (let i=0; i < countries.length; i++) {
+        objects.push({
+            tara: countries[i],
+            SV: valuesSV[i],
+            PIB: valuesPIB[i],
+            POP: valuesPOP[i]
+        });
+    }
+    console.log(objects);
+
+    for (let prop of indicators) {
+        let headerCell = document.createElement("th");
+        headerCell.innerHTML = prop;
+        headerRow.appendChild(headerCell);
+    }
+
+    for (let prop of objects) {
+        let tableRow = document.createElement("tr");
+        let dataCellCountry = document.createElement("td");
+        let dataCellSV = document.createElement("td");
+        let dataCellPIB = document.createElement("td");
+        let dataCellPOP = document.createElement("td");
+        dataCellCountry.innerHTML = prop.tara;
+        dataCellSV.innerHTML = prop.SV;
+        dataCellPIB.innerHTML = prop.PIB;
+        dataCellPOP.innerHTML = prop.POP;
+        tableRow.appendChild(dataCellCountry);
+        tableRow.appendChild(dataCellSV);
+        tableRow.appendChild(dataCellPIB);
+        tableRow.appendChild(dataCellPOP);
+        tableBody.appendChild(tableRow);
+        if (prop.SV > mediaSV) {
+            dataCellSV.style.backgroundColor = "green";
+        } else {
+            dataCellSV.style.backgroundColor = "red";
+        }
+        if (prop.PIB > mediaPIB) {
+            dataCellPIB.style.backgroundColor = "green";
+        } else {
+            dataCellPIB.style.backgroundColor = "red";
+        }
+        if (prop.POP > mediaPOP) {
+            dataCellPOP.style.backgroundColor = "green";
+        } else {
+            dataCellPOP.style.backgroundColor = "red";
+        }
+    }
+
+    tableHeader.appendChild(headerRow);
+    table.appendChild(tableBody);
+    table.appendChild(tableHeader);
+    table.id = "myTable";
+    document.body.appendChild(table);
 }
 
 
