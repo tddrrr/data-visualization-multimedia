@@ -6,6 +6,7 @@ async function loadData() {
 
     let countries = [];
     let indicators = [];
+    let years = [];
     //incarc un array de countries cu elementele tari din arr de obj
     data.forEach(element => {//verific daca deja exista el in array
         if (!countries.includes(element.tara)) {
@@ -16,6 +17,11 @@ async function loadData() {
     data.forEach(element => {//verific daca deja exista el in array
         if (!indicators.includes(element.indicator)) {
             indicators.push(element.indicator);
+        }
+    });
+    data.forEach(element => {//verific daca deja exista el in array
+        if (!years.includes(element.an)) {
+            years.push(element.an);
         }
     });
     //creez un option value pt fiecare element din countries
@@ -35,19 +41,31 @@ async function loadData() {
         option.text = element;
         indicatorSelector.appendChild(option);
     })
-    console.log(countries);
-    console.log(data);
 
-    countrySelector.addEventListener('change', drawGraph);
-    indicatorSelector.addEventListener('change',drawGraph);
+    //acelasi lucru pentru an
+    let yearSelector = document.getElementById("year");
+    years.forEach(element => {
+        let option = document.createElement("option");
+        option.value = element;
+        option.text = element;
+        yearSelector.appendChild(option);
+    })
+
+    let animate = document.getElementById("animatie");
+    
+    countrySelector.addEventListener('change', drawSVGGraph);
+    indicatorSelector.addEventListener('change', drawSVGGraph);
+    yearSelector.addEventListener('change', (e) => drawBubbleChart(e.target.value));
+    animate.addEventListener('click', canvasAnimation);
 }
 
-function drawGraph() {
+function drawSVGGraph() {
     //gasesc obiectele care coincid cu tara si indicatorul primit
     //le adaug intr-un array ca sa le am pe toate intr-un loc
     //apoi desenez graficul pt valorile din obiectele respective
     let objectsSelected=[];
     let values=[]; //pt valorile indicatorului
+    let years = []; //pt anii afisati pe tooltip
     data.forEach(element => {
         if ((element.tara === document.getElementById("country").value) && (element.indicator === document.getElementById("indicator").value))
             objectsSelected.push(element);
@@ -55,37 +73,152 @@ function drawGraph() {
     objectsSelected.forEach(element => {
         values.push(element.valoare);
     });
-    console.log(values);
-    let canvas = document.getElementById("canvas");
-    let context = canvas.getContext("2d");
-    let width = canvas.width, height = canvas.height;
-    //sa nu desenez peste
-    context.fillStyle = "white";
-    context.fillRect(0,0,width, height);
-
+    objectsSelected.forEach(element => {
+        years.push(element.an);
+    })
+    let svg = document.getElementById("graph");
+    //elimin cercurile facute pentru graficul anterior 
+    svg.querySelectorAll('circle').forEach(circle => circle.remove());
+    let polyline = document.getElementById("polyline");
+    let points = polyline.getAttribute("points");
+    //ii dau val 0 ca sa nu se suprapuna graficele
+    points = 0;
+    let width = svg.width.baseVal.value, height = svg.height.baseVal.value; 
+    //am dat baseval aici pt ca mie height/width imi returna un obiect cu prop astea
     const n = values.length;
     const widthL = width / n;
     const maxVal = Math.max(...values);
-    context.strokeStyle = "red";
-    context.lineWidth = 3;
-    
-    context.beginPath();
     for (let i = 0; i < n; i++) {
+        //calculez punctele x si y
         let x = i*widthL;
         let y = height - values[i] * height/ maxVal;
-        context.lineTo(x,y+50);
-        console.log(x,y)
+        if (y < height) y +=50; //conditia e ca daca coord pe y nu depaseste
+        //lungimea, atunci ii adaug 50 sa mai ocupe din SVG; 
+        //pt NL SV imi iesea din pagina daca adaugam direct 50
+        points += `${x}, ${y} `  //si le adaug la string-ul de puncte x y
+        polyline.setAttribute("points", points); 
+        //adaug punctele pe care pun tooltipul
+        let circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        circle.setAttribute("cx", x);
+        circle.setAttribute("cy", y);
+        circle.setAttribute("r", 2);
+        circle.setAttribute("stroke", "red")
+        circle.setAttribute("fill", "red")
+        //imi creez tooltipul cu title. dinamic, ca sa-mi afiseze deasupra punctului pe care am valoarea, ce valoare am si din ce an este
+        let title = document.createElementNS("http://www.w3.org/2000/svg", "title");
+        title.innerHTML=`Valoarea din anul ${years[i]} este ${values[i]}`
+        circle.appendChild(title); //si adaug in elementul circle
+        svg.appendChild(circle);
     }
-    context.stroke();
-    let y = height - values[0] *height /maxVal;
-    context.beginPath();
+    
+    //imi desenez axele
+    let axis = document.getElementById("axis");
+    let axisPoints = axis.getAttribute("points");
+    //resetez la 0 punctele sa nu se suprapuna
+    axisPoints = 0;
+    let yPos = height - values[0] * height / maxVal;
+    if (yPos < height) yPos += 50; //acelasi lucru ca mai sus, doar ca pt grafice
+
+    let xPos = n*widthL;
+    axisPoints += `0,0 0,${yPos} ${xPos},${yPos} `
+    axis.setAttribute("points", axisPoints)
+}
+
+function drawBubbleChart(year) {
+    //gasesc obiectele care coincid cu anul primit
+    let objectsSelected = [];
+    //am nevoie de valori PIB si valori SV, folosesc 2 vectori dif
+    let valuesPIB = [];
+    let valuesPOP = [];
+    let valuesSV = [];
+    data.forEach(element => {
+        if (element.an === year)
+            objectsSelected.push(element);
+    });
+    objectsSelected.forEach(element => {
+        if (element.indicator === "PIB")
+            valuesPIB.push(element.valoare);
+    });
+    objectsSelected.forEach(element => {
+        if (element.indicator === "POP")
+            valuesPOP.push(element.valoare);
+    });
+    objectsSelected.forEach(element => {
+        if (element.indicator === "SV")
+            valuesSV.push(element.valoare);
+    });
+    let canvas = document.getElementById("bubblechart");
+    let context = canvas.getContext("2d");
+    let width = canvas.width, height = canvas.height;
+    // sa nu desenez peste
+    context.fillStyle = "white";
+    context.fillRect(0,0,width, height);
+
+    //iau pe axa y valuesPIB si pe axa x valuesPop
+    const n = valuesPIB.length; //nr de cercuri; pib
+    const maxVal = Math.max(...valuesPIB);
+    for (let i = 0; i < n; i++) {
+        //aici imi declar culoarea randomizata cu care desenez
+        let randomColor = "rgb("+Math.floor(Math.random()*256)+","
+        +Math.floor(Math.random()*256)+","+Math.floor(Math.random()*256)+")";
+        //desenez cercul
+        context.fillStyle = randomColor;
+        context.beginPath();
+        let x = width * valuesPOP[i]/10000000/5+5;
+        let y = height - valuesPIB[i] * height/ maxVal+5;
+        let r = valuesSV[i]/10; //am ales o valoare arbitrara ca sa nu-mi ocupe prea mult spatiu
+        //oricum SV sunt f apropiate intre ele si toate au o marime asemenatoare
+        context.arc(x,y,r,0,2 * Math.PI);
+        context.fill();
+        //desenez legenda
+        context.fillStyle = randomColor;
+        context.fillText(`${objectsSelected[i].tara}`,447,i*10+10);
+        context.fillText(`${valuesSV[i]}`,480,i*10+10);
+        context.beginPath();
+        context.fillStyle = randomColor;
+        context.arc(470,i*10+6,5,0,2*Math.PI);
+        context.fill();
+    }
+    //desenez si axele
+    let y = height - valuesPIB.sort(function(a, b) {
+        return a-b; //fac o functie de sortare numerica; sort() functioneaza doar pe stringuri
+    })[0] * height / maxVal + 10;
+    context.beginPath(); 
     context.lineWidth = 2;
-    context.moveTo(2,20);
-    context.lineTo(2,y+50);
-    context.lineTo(n*widthL, y+50);
+    context.moveTo(0,0);
+    context.lineTo(2,y);
+    context.lineTo(width, y);
     context.strokeStyle = "black";
     context.stroke();
-    console.log(n, width, height, widthL, maxVal);
+//  desenez anul
+    context.strokeText(`${year}`, 250, 10);
 }
+
+let bool = false;
+function canvasAnimation() {
+    //folosesc variabila bool pentru ca atunci cand apas de mai multe ori
+    //pe butonul de animatie, sa nu porneasca mai multe in acelasi timp
+    if (!bool) {
+    bool = true;
+    let i=0;
+    let years = [];
+    data.forEach(element => {
+        if (!years.includes(element.an)) {
+            years.push(element.an);
+        }
+    });
+    let interval = setInterval(function() {
+        if (i > years.length-1) {
+            clearInterval(interval);
+            bool = false;
+        } else {
+            drawBubbleChart(years[i]);
+            i++;
+        }
+    }
+    ,1000);
+    }
+}
+
 
 document.addEventListener('DOMContentLoaded', loadData);

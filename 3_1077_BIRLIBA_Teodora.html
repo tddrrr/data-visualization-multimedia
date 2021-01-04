@@ -6,8 +6,18 @@
         <div id="selectors">
             <select id="country"></select>
             <select id="indicator"></select>
+            <select id="year"></select>
         </div>
-        <canvas id="canvas" width="500" height="500"></canvas>
-    <script src="./3_1077_BIRLIBA_Teodora.js"></script>   
+        <svg id ="graph" width="300" height="100%">
+            <polyline id="axis" points=" " style="fill:none; stroke: black; stroke-width: 3;"></polyline>
+            <polyline id="polyline" points=" "
+            style="fill:none; stroke: red; stroke-width: 3;"></polyline>
+        </svg>
+        <br>
+        <canvas id="bubblechart" width="500" height="500" ></canvas>
+        <br>
+        <button id="animatie">Animatie</button>
+        <button id="table">Creeaza tabel</button>
+        <script src="./3_1077_BIRLIBA_Teodora.js"></script>   
     </body>
 </html>
