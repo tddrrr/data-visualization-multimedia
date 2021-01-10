@@ -1,0 +1,50 @@
+table {
+    display: none;
+}
+th, td {
+    border: 1px solid black;
+}
+td {
+    text-align: right;
+    padding: 2px;
+}
+.displayTable {
+    display: block;
+}
+#graph {
+    margin-top: 1%;
+}
+#bubblechart {
+    margin-top: 10px;
+}
+#myTable {
+    position: absolute;
+    top: 0;
+    right: 20%;
+    float: right;
+}
+
+select {
+    font-size: 16px;
+    padding: 5px 10px;
+    background-color:white;
+    border: 2px solid #95D7AE;
+    border-radius: 4px;
+}
+.styleButton {
+    transition-duration: 0.4s;
+    font-size: 16px;
+    padding: 15px 32px;
+    background-color:white;
+    border: 2px solid #95D7AE;
+    border-radius: 4px;
+}
+.styleButton:hover {
+    background-color: #95D7AE;
+    color: white;
+}
+td {
+    padding-left: 3px;
+    padding-right: 3px;
+
+}

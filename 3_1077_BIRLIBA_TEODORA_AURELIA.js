@@ -105,9 +105,9 @@ function drawSVGGraph() {
         let circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
         circle.setAttribute("cx", x);
         circle.setAttribute("cy", y);
-        circle.setAttribute("r", 2);
-        circle.setAttribute("stroke", "red")
-        circle.setAttribute("fill", "red")
+        circle.setAttribute("r", 3);
+        circle.setAttribute("stroke", "#F26419")
+        circle.setAttribute("fill", "#F26419")
         //imi creez tooltipul cu title. dinamic, ca sa-mi afiseze deasupra punctului pe care am valoarea, ce valoare am si din ce an este
         let title = document.createElementNS("http://www.w3.org/2000/svg", "title");
         title.innerHTML=`Valoarea din anul ${years[i]} este ${values[i]}`
@@ -316,19 +316,19 @@ function createTable(year) {
         tableRow.appendChild(dataCellPOP);
         tableBody.appendChild(tableRow);
         if (prop.SV > mediaSV) {
-            dataCellSV.style.backgroundColor = "green";
+            dataCellSV.style.backgroundColor = "#95D7AE";
         } else {
-            dataCellSV.style.backgroundColor = "red";
+            dataCellSV.style.backgroundColor = "#F26419";
         }
         if (prop.PIB > mediaPIB) {
-            dataCellPIB.style.backgroundColor = "green";
+            dataCellPIB.style.backgroundColor = "#95D7AE";
         } else {
-            dataCellPIB.style.backgroundColor = "red";
+            dataCellPIB.style.backgroundColor = "#F26419";
         }
         if (prop.POP > mediaPOP) {
-            dataCellPOP.style.backgroundColor = "green";
+            dataCellPOP.style.backgroundColor = "#95D7AE";
         } else {
-            dataCellPOP.style.backgroundColor = "red";
+            dataCellPOP.style.backgroundColor = "#F26419";
         }
     }
 
